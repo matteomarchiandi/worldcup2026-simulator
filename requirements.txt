@@ -4,3 +4,4 @@ numpy
 xgboost
 matplotlib
 seaborn
+scikit-learn
