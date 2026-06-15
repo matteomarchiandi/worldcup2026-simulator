@@ -150,9 +150,9 @@ if st.button("Simulate Match", type="primary"):
     # Visual Chart
     fig, ax = plt.subplots(figsize=(6, 3))
     if is_knockout:
-        data = {f"{team_h} Wins": p_team_1, f"{team_a} Wins": p_team_2}
+        data = {f"{team_h} Win": p_team_1, f"{team_a} Win": p_team_2}
     else:
-        data = {f"{team_h} Wins": p_team_1, "Draws": p_draw, f"{team_a} Wins": p_team_2}
+        data = {f"{team_h} Win": p_team_1, "Draw": p_draw, f"{team_a} Win": p_team_2}
         
     sns.barplot(x=list(data.values()), y=list(data.keys()), palette="magma", ax=ax)
     ax.set_xlabel("Probability (%)")
