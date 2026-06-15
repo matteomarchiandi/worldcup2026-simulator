@@ -78,7 +78,8 @@ if search_team:
                     st.info(team)
     else:
         st.warning("This team was not found in the 2026 World Cup groups definition.")
-
+        
+st.markdown("---")
 # --- Team Selection UI ---
 st.subheader("Match")
 
@@ -133,7 +134,6 @@ with col2:
     elo_a = get_clean_elo(team_a)
     st.info(f"Current ELO: **{elo_a:.1f}**")
 
-st.markdown("---")
 # --- Match Settings ---
 st.markdown("### Simulation Settings")
 is_knockout = st.checkbox("Knockout Match (no draws allowed)", value=False)
