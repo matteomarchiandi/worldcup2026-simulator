@@ -1483,14 +1483,3 @@ simulate_KO_world_cup_26(round_of_32_matches, 10000, current_elos)
 """## More Features
 To get a more comprehensive model I could add some additional features to the model, like team market value and the official FIFA ranking positions.  
 """
-
-
-
-
-import json
-# Save your filtered ELO dictionary
-with open('current_elos.json', 'w') as f:
-    json.dump(current_elos, f)
-
-# Save your trained model
-wc_26_predictor.save_model('wc_model.json')
