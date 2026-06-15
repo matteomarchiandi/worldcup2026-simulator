@@ -74,7 +74,7 @@ def get_clean_elo(team_name):
 col1, col2 = st.columns(2)
 
 with col1:
-    team_h = st.selectbox("Home Team (or Team 1)", team_list, index=team_list.index("Brazil") if "Brazil" in team_list else 0)
+    team_h = st.selectbox("Home Team", team_list, index=team_list.index("Brazil") if "Brazil" in team_list else 0)
     # Use the helper function here
     elo_h = get_clean_elo(team_h)
     st.info(f"Current ELO: **{elo_h:.1f}**")
@@ -82,7 +82,7 @@ with col1:
 with col2:
     # Filter out home team so they can't play themselves
     away_teams = [team for team in team_list if team != team_h]
-    team_a = st.selectbox("Away Team (or Team 2)", away_teams, index=away_teams.index("Morocco") if "Morocco" in away_teams else 0)
+    team_a = st.selectbox("Away Team", away_teams, index=away_teams.index("Morocco") if "Morocco" in away_teams else 0)
     # Use the helper function here
     elo_a = get_clean_elo(team_a)
     st.info(f"Current ELO: **{elo_a:.1f}**")
