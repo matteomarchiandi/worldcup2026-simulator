@@ -9,8 +9,8 @@ from xgboost import XGBClassifier
 # Set page configuration
 st.set_page_config(page_title="World Cup 2026 Match Predictor", page_icon="⚽", layout="centered")
 
-st.title("⚽ World Cup 2026 Match Simulator")
-st.markdown("Select two teams to simulate a single match based on their ELO ratings and the trained XGBoost model.")
+st.title("⚽ 2026 World Cup Match Simulator")
+st.markdown("Select two teams to simulate a single match based on their ELO ratings and the trained XGBoost model (last data update on 2026-06-10).")
 
 # --- Load Pre-computed Data & Model ---
 @st.cache_resource
@@ -34,7 +34,7 @@ except FileNotFoundError:
 
 # --- Team Selection UI ---
 # --- Team Selection UI ---
-st.subheader("Match Setup")
+st.subheader("Match")
 
 # Helper function to handle lists or strings from the JSON
 def get_clean_elo(team_name):
@@ -88,8 +88,8 @@ with col2:
     st.info(f"Current ELO: **{elo_a:.1f}**")
 
 # --- Match Settings ---
-st.markdown("### Match Settings")
-is_knockout = st.checkbox("Knockout Match (No Draws / Must have a Winner)", value=False)
+st.markdown("### Simulation Settings")
+is_knockout = st.checkbox("Knockout Match (no draws allowed)", value=False)
 n_sims = st.slider("Number of Match Simulations", min_value=100, max_value=10000, value=5000, step=100)
 
 # --- Simulation Logic ---
