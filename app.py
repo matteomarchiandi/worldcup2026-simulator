@@ -203,4 +203,4 @@ if st.button("Simulate Match", type="primary"):
         
     sns.barplot(x=list(data.values()), y=list(data.keys()), palette="magma", ax=ax)
     ax.set_xlabel("Probability (%)")
-    st.pyplot(fig)import streamlit as st
+    st.pyplot(fig)
