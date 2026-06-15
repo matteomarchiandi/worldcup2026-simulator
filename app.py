@@ -97,7 +97,7 @@ with tab1:
     search_team = st.selectbox(
         "Select a team to find their World Cup Group:", 
         team_list, 
-        index=team_list.index("Argentina") if "Argentina" in team_list else 0
+        index=team_list.index("Mexico") if "Mexico" in team_list else 0
     )
 
     if search_team:
