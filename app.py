@@ -33,19 +33,19 @@ except FileNotFoundError:
     st.stop()
 
 def get_clean_elo(team_name):
-    # 1. Safety check for empty team names on first load
+    # Safety check for empty team names on first load
     if not team_name:
         return 1500.0
         
     try:
-        # 2. Safely get the value (defaulting to 1500 if missing)
+        # Safely get the value (defaulting to 1500 if missing)
         val = current_elos.get(team_name, 1500.0)
         
-        # 3. Handle if the value is a list (e.g., [1400, 1450, 1500])
+        # Handle if the value is a list (e.g., [1400, 1450, 1500])
         if isinstance(val, list):
             val = val[-1]
             
-        # 4. Handle if the value is a dictionary (e.g., {"rating": 1500, "matches": 10})
+        # Handle if the value is a dictionary (e.g., {"rating": 1500, "matches": 10})
         elif isinstance(val, dict):
             # Guess the most common keys for ELO
             if "rating" in val:
@@ -56,11 +56,11 @@ def get_clean_elo(team_name):
                 # Just grab the first value in the dictionary as a fallback
                 val = list(val.values())[0]
                 
-        # 5. Force it to a decimal
+        # Force it to a decimal
         return float(val)
         
     except Exception as e:
-        # If it STILL crashes, this will print the exact reason on your app screen!
+        # If it crashes, this will print the exact reason
         st.error(f"🚨 **Data Error for {team_name}:**")
         st.write(f"The raw value pulled from JSON is: `{val}` (Type: {type(val)})")
         st.write(f"The exact error is: `{e}`")
@@ -82,10 +82,9 @@ wc_26_groups = {
     "Group K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
     "Group L": ["England", "Croatia", "Ghana", "Panama"]
 }
+
 # --- App Navigation (Tabs) ---
 tab1, tab2 = st.tabs(["⚽ Match Simulator", "🏆 Power Rankings"])
-
-
 
 # ==========================================
 # TAB 1: MATCH SIMULATOR
@@ -218,7 +217,7 @@ with tab1:
 
 
 # ==========================================
-# TAB 2: POWER RANKINGS (NEW!)
+# TAB 2: POWER RANKINGS
 # ==========================================
 with tab2:
     st.subheader("🏆 Power Rankings")
