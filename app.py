@@ -135,19 +135,19 @@ with tab1:
             st.info(f"Current ELO: **{elo_h:.1f}**")
         else:
             team_h = None
-            st.info("Select a team to see their ELO.")
+            st.info("Select a team to see their ELO")
 
     with col2:
-        away_options = ["Select a team..."] + [t for t in team_list if t != team_h]
+        away_options = ["Select a team"] + [t for t in team_list if t != team_h]
         a_selection = st.selectbox("Away Team", away_options, index=0)
         
-        if a_selection != "Select a team...":
+        if a_selection != "Select a team":
             team_a = a_selection
             elo_a = get_clean_elo(team_a)
             st.info(f"Current ELO: **{elo_a:.1f}**")
         else:
             team_a = None
-            st.info("Select a team to see their ELO.")
+            st.info("Select a team to see their ELO")
 
     st.markdown("---")
     # --- Match Settings ---
