@@ -251,7 +251,7 @@ with tab2:
     col_left, col_right = st.columns([1, 1.5])
     
     with col_left:
-        st.markdown("**Leaderboard Data**")
+        st.markdown("**Teams Leaderboard**")
         st.dataframe(
             df_static.style.format({"Win Probability (%)": "{:.2f}%"}), 
             use_container_width=True,
@@ -259,7 +259,7 @@ with tab2:
         )
         
     with col_right:
-        st.markdown("**Visual Probabilities (Top 15)**")
+        st.markdown("**Winning Probabilities (Top 15)**")
         fig_static, ax_static = plt.subplots(figsize=(8, 8))
         
         # Show the top 15 teams in the chart for a better overview
