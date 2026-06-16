@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""WC 26_Predictor
-"""
-
-"""# Preliminary Analysis and Building of the Model"""
-
 import pandas as pd
 import numpy as np
 import os
@@ -17,10 +11,7 @@ import re
 from typing import Tuple
 import missingno as msno
 
-"""## Download and Explore the `results` dataset
-
-
-
+"""Download and Explore the `results` dataset
 """
 
 path = kagglehub.dataset_download("martj42/international-football-results-from-1872-to-2017")
@@ -51,11 +42,6 @@ team_name_map = {
 results['home_team'] = results['home_team'].replace(team_name_map)
 results['away_team'] = results['away_team'].replace(team_name_map)
 
-# Also update the current_elos dictionary keys to maintain consistency
-# for old_name, new_name in team_name_map.items():
-#     if old_name in current_elos:
-#         current_elos[new_name] = current_elos.pop(old_name)
-
 results['date'] = pd.to_datetime(results['date'])
 results = results.drop(columns=['city', 'country'])
 results = results.sort_values('date').reset_index(drop=True)
@@ -63,113 +49,24 @@ results = results.sort_values('date').reset_index(drop=True)
 results = results[results['date'] < '2026-06-11']
 results
 
-# print(results['tournament'].unique())
-# print(results[(results['date'] > '1970-01-01') & (results['date'] < '2026-06-11')]['tournament'].unique())
 print(len(results[(results['date'] > '1970-01-01') & (results['date'] < '2026-06-11')]['tournament'].unique()))
 
-"""## Get the Elo scores"""
-
-# def k_weight(tournament_name):
-#     # Maps the tournament type to the K weight constant
-#     tournament = str(tournament_name).lower()
-
-#     if 'world cup' in tournament and 'qualification' not in tournament:
-#         return 60  # World Cup finals
-#     elif 'copa américa' in tournament or 'euro' in tournament or 'afc asian cup' in tournament or 'african cup of nations' in tournament:
-#         return 50  # Continental championship finals
-#     elif 'qualification' in tournament or 'qualifiers' in tournament:
-#         return 40  # World Cup and continental qualifiers
-#     elif 'friendly' in tournament:
-#         return 20  # Friendly matches
-#     else:
-#         return 30  # All other tournaments
-
-# def get_goal_diff_multiplier(home_score, away_score):
-#     # Calculates the K multiplier based on the goal difference (N)
-#     n = abs(home_score - away_score)
-
-#     if n <= 1:
-#         return 1.0 # No increase for 0 or 1 goal difference
-#     elif n == 2:
-#         return 1.5 # Increased by half (1 + 1/2)
-#     elif n == 3:
-#         return 1.75 # Increased by 3/4 (1 + 3/4)
-#     else:
-#         return 1.75 + ((n - 3) / 8.0) # Increased by 3/4 + (N-3)/8
-
-# BASE_ELO = 1500
-# current_elos = {}
-
-# home_pre_elos = []
-# away_pre_elos = []
-# match_tournament_k = []
-
-
-# for idx, row in results.iterrows():
-#     home = row['home_team']
-#     away = row['away_team']
-
-#     # Get pre-match Elos (R_0)
-#     h_elo = current_elos.get(home, BASE_ELO)
-#     a_elo = current_elos.get(away, BASE_ELO)
-
-
-#     # Store the pre-match ratings for our XGBoost features
-#     home_pre_elos.append(h_elo)
-#     away_pre_elos.append(a_elo)
-
-
-#     # 1. Calculate dr (Difference in ratings + 100 for home team)
-#     if row['neutral'] == False:
-#             dr_home = (h_elo + 100) - a_elo
-#             dr_away = a_elo - (h_elo + 100) # The inverse for the away team
-#     else:
-#         dr_home = h_elo - a_elo
-#         dr_away = a_elo - h_elo
-
-#     # 2. Calculate We (Expected Result)
-#     we_home = 1 / (10 ** (-dr_home / 400) + 1)
-#     we_away = 1 / (10 ** (-dr_away / 400) + 1)
-
-#     # 3. Determine W (Actual Result)
-#     if row['home_score'] > row['away_score']:
-#         w_home, w_away = 1.0, 0.0
-#     elif row['home_score'] < row['away_score']:
-#         w_home, w_away = 0.0, 1.0
-#     else:
-#         w_home, w_away = 0.5, 0.5
-
-#     # 4. Calculate final K (Weight constant * Goal difference adjustment)
-#     base_k = k_weight(row['tournament'])
-#     match_tournament_k.append(base_k)
-#     goal_multiplier = get_goal_diff_multiplier(row['home_score'], row['away_score'])
-#     final_k = base_k * goal_multiplier
-
-#     # 5. Calculate R_n (New Rating)
-#     current_elos[home] = h_elo + final_k * (w_home - we_home)
-#     current_elos[away] = a_elo + final_k * (w_away - we_away)
-
-# results['home_pre_match_elo'] = home_pre_elos
-# results['away_pre_match_elo'] = away_pre_elos
-# results['tournament_k'] = match_tournament_k
-
-# results.shape
-
+""" Get the Elo scores"""
 class EloTracker:
     """
-    A class to track and calculate official World Football Elo Scores.
+    A class to track and calculate official World Football Elo Scores
     """
     def __init__(self, base_rating: float = 1500.0, home_advantage: float = 100.0):
         self.scores = {}
         self.base_rating = base_rating
         self.home_advantage = home_advantage
 
-    def get_rating(self, team: str) -> float:
-        """Safely fetch a team's current rating, defaulting to base_rating."""
+    def get_scores(self, team: str) -> float:
+        """Safely fetch a team's current rating, defaulting to base_rating"""
         return self.scores.get(team, self.base_rating)
 
     def get_k_weight(self, tournament: str) -> int:
-        """Method to map tournament types to K-factors."""
+        """Method to map tournaments to K-factors"""
         t_lower = str(tournament).lower()
         if 'world cup' in t_lower and 'qual' not in t_lower:
             return 60
@@ -182,7 +79,7 @@ class EloTracker:
         return 30
 
     def get_goal_multiplier(self, home_score: int, away_score: int) -> float:
-        """Method to calculate the margin of victory multiplier."""
+        """Method to calculate the goal difference multiplier"""
         n = abs(home_score - away_score)
         if n <= 1:
             return 1.0
@@ -196,23 +93,23 @@ class EloTracker:
                       tournament: str, is_neutral: bool = False) -> Tuple[float, float]:
         """
         Calculates the pre-match scores, updates the internal dictionary based on the result,
-        and returns the pre-match scores for feature engineering.
+        and returns the pre-match scores for feature engineering
         """
         # 1. Fetch current pre-match scores
-        h_elo = self.get_rating(home_team)
-        a_elo = self.get_rating(away_team)
+        h_elo = self.get_scores(home_team)
+        a_elo = self.get_scores(away_team)
 
-        # 2. Apply Home Advantage (if not a neutral venue)
+        # 2. Apply Home Advantage if not a neutral venue
         h_adv = 0 if is_neutral else self.home_advantage
 
-        # 3. Calculate Expected Result (We)
+        # 3. Calculate Expected Result
         dr_home = (h_elo + h_adv) - a_elo
         dr_away = a_elo - (h_elo + h_adv)
 
         we_home = 1 / (10 ** (-dr_home / 400) + 1)
         we_away = 1 / (10 ** (-dr_away / 400) + 1)
 
-        # 4. Determine Actual Result (W)
+        # 4. Determine Actual Result
         if home_score > away_score:
             w_home, w_away = 1.0, 0.0
         elif home_score < away_score:
@@ -227,13 +124,15 @@ class EloTracker:
         self.scores[home_team] = h_elo + final_k * (w_home - we_home)
         self.scores[away_team] = a_elo + final_k * (w_away - we_away)
 
-        # 7. Return the PRE-MATCH scores so we can save them for XGBoost, but
+        # 7. Return the pre-match scores to save them for XGBoost, as
         # the dictionary is actually updated -> explicitly to avoid data leakage
         return h_elo, a_elo
 
-"""I need to "train" the Elo scores since the beginning of match records, as the scores tend to converge to a team's true strength relative to its competitors only after about 30 matches. Otherwise they should be considered provisional."""
+# I need to "train" the Elo scores since the beginning of match records, as the scores tend 
+# to converge to a team's true strength relative to its competitors only after about 30 matches. 
+# Otherwise they should be considered provisional.
 
-# 1. Initialize our shiny new Elo tracker
+# 1. Initialize the Elo tracker
 elo_score = EloTracker(base_rating=1500, home_advantage=100)
 
 # Arrays to store the features we extract
@@ -257,11 +156,10 @@ for idx, row in results.iterrows():
     home_pre_elos.append(h_pre)
     away_pre_elos.append(a_pre)
 
-# 3. Attach to your DataFrame
+# 3. Attach to the results dataframe
 results['home_pre_elo'] = home_pre_elos
 results['away_pre_elo'] = away_pre_elos
 
-# To use the final dictionary in your Monte Carlo simulations later:
 current_elos = elo_score.scores
 
 results['tournament_k'] = results['tournament'].apply(elo_score.get_k_weight)
@@ -271,15 +169,12 @@ new_order = ['date', 'home_team', 'away_team', 'home_pre_elo', 'away_pre_elo',
 results = results.reindex(columns=new_order)
 results
 
+# Print the top 20 Elo scores
 elo_series = pd.Series(current_elos).sort_values(ascending=False)
 print("TOP 20 Elo RATINGS")
 print(elo_series.head(20))
 
-
-"""## Prepare data for XGBoost
-Now I build the dataframe for XGBoost training.
-"""
-
+"""Prepare data for XGBoost"""
 results_xgb = results.copy()
 results_xgb = results_xgb.drop(columns=['home_team', 'away_team', 'tournament' ])
 
@@ -299,47 +194,15 @@ results_xgb
 
 features = ['date', 'home_pre_elo', 'away_pre_elo', 'elo_pre_diff','match_outcome', 'tournament_k', 'neutral']
 results_xgb = results_xgb.reindex(columns=features)
-
 results_xgb['neutral'] = results_xgb['neutral'].astype(int)
-
-results_xgb = pd.get_dummies(results_xgb, columns=['tournament_k'], prefix='k', dtype=int)
-
-results_xgb = results_xgb[ results_xgb['date'] > '1950-01-01' ].reset_index(drop=True)
-
+results_xgb = pd.get_dummies(results_xgb, columns=['tournament_k'], prefix='k', dtype=int) # one-hot encoding for tournament K
+results_xgb = results_xgb[ results_xgb['date'] > '2000-01-01' ].reset_index(drop=True)
 results_xgb
-
-# results_xgb = results.copy()
-# results_xgb = results_xgb.drop(columns=['home_team', 'away_team', 'tournament' ])
-
-# match_outcome = []
-# for idx, row in results.iterrows():
-#     if row['home_score'] > row['away_score']:
-#         match_outcome.append(1)
-#     elif row['home_score'] < row['away_score']:
-#         match_outcome.append(2)
-#     else:
-#         match_outcome.append(0)
-
-# results_xgb['match_outcome'] = match_outcome
-# results_xgb
-
-# new = ['date', 'home_pre_match_elo', 'away_pre_match_elo', 'match_outcome', 'tournament_k', 'neutral']
-# results_xgb = results_xgb.reindex(columns=new)
-
-# results_xgb['neutral'] = results_xgb['neutral'].astype(int)
-
-# results_xgb = pd.get_dummies(results_xgb, columns=['tournament_k'], prefix='k', dtype=int)
-
-# results_xgb = results_xgb[ results_xgb['date'] > '1950-01-01' ].reset_index(drop=True)
-
-# results_xgb
 
 """### Split data into Training and Test Sets"""
 
 train_res = results_xgb[ results_xgb['date'] < '2022-11-20' ]
-# test_res = results_xgb[ (results_xgb['date'] > '2022-11-20') & (results_xgb['date'] < '2026-06-11') & (results_xgb['match_outcome'] != 0) ]
 test_res = results_xgb[ (results_xgb['date'] > '2022-11-20') & (results_xgb['date'] < '2026-06-11') ]
-# test_res = results_xgb[ (results_xgb['date'] > '2022-11-20')
 
 drop_cols = ['date', 'match_outcome']
 
@@ -351,14 +214,14 @@ y_test = test_res['match_outcome']
 
 X_test.head()
 
-"""### Train and Evaluate the Model"""
+"""Train and Evaluate the Model"""
 
 model = XGBClassifier(
-    n_estimators=300,       # Number of decision trees
+    n_estimators=300,       
     objective='multi:softprob',
-    learning_rate=0.1,     # Slow learning rate for better generalization
-    max_depth=4,            # Keep trees shallow to prevent overfitting
-    # subsample=0.8,          # Use 80% of data per tree to add randomness
+    learning_rate=0.1,    
+    max_depth=4,           
+    # subsample=0.8,          
     random_state=42)
 
 model.fit(X_train, y_train)
@@ -369,7 +232,6 @@ model.fit(X_train, y_train)
 predicted_probabilities = model.predict_proba(X_test)
 predictions = model.predict(X_test)
 
-# model.predict_proba(X_test)
 
 print("Accuracy on Test Set:", accuracy_score(y_test, predictions))
 print("Log Loss (the lower the better):", log_loss(y_test, predicted_probabilities, labels=[0,1,2]))
@@ -386,14 +248,12 @@ plt.xlabel("Predicted Labels")
 plt.ylabel("True Labels")
 plt.show()
 
-# Get feature importances from the model
+# Retrieve feature importances from the model
 importances = model.feature_importances_
 feature_names = X_train.columns
-
-# Create a pandas series for easy plotting
 feature_importance_series = pd.Series(importances, index=feature_names).sort_values(ascending=True)
 
-# Plotting
+# Plotting feature importances
 plt.figure(figsize=(10, 6))
 feature_importance_series.plot(kind='barh', color='skyblue')
 plt.title('Feature Importance (XGBoost)')
@@ -405,13 +265,12 @@ plt.show()
 print("Feature Importances:")
 print(feature_importance_series.sort_values(ascending=False))
 
-"""### Re-train the model on all matches available
-Now I re-train the model using all data available, including the matches just used to assess the model performance. \
+"""Re-train the model on all matches available
+Now I re-train the model using all data available, including the matches just used to assess the model performance. 
 Since the importance of home and away teams' Elo is low, I decide to consider only Elo difference during the training proces.
 """
 
 train_res = results_xgb[ results_xgb['date'] < '2026-06-11' ]
-
 drop_cols = ['date', 'home_pre_elo', 'away_pre_elo', 'match_outcome']
 
 X_train = train_res.drop(columns=drop_cols)
@@ -429,14 +288,10 @@ wc_26_predictor = XGBClassifier(
 
 wc_26_predictor.fit(X_train, y_train)
 
-# Get feature importances from the model
+# Get and plot feature importances from the model
 importances = wc_26_predictor.feature_importances_
 feature_names = X_train.columns
-
-# Create a pandas series for easy plotting
 feature_importance_series = pd.Series(importances, index=feature_names).sort_values(ascending=True)
-
-# Plotting
 plt.figure(figsize=(9,4))
 feature_importance_series.plot(kind='barh', color='skyblue')
 plt.title('Feature Importance (XGBoost)')
@@ -444,14 +299,21 @@ plt.xlabel('Importance Score')
 plt.ylabel('Features')
 plt.show()
 
-# Print the raw values
 print("Feature Importances:")
 print(feature_importance_series.sort_values(ascending=False))
 
-"""# Simulate the World Cup
+"""Simulate the World Cup"""
 
-## Simulate a single match
-"""
+"""Simulate a single match"""
+wc_teams = ["Algeria", "Argentina", "Australia", "Austria", "Belgium",
+    "Bosnia and Herzegovina", "Brazil", "Cabo Verde", "Canada",
+    "Colombia", "DR Congo", "Croatia", "Curaçao",
+    "Czechia", "Ecuador", "Egypt", "England", "France", "Germany",
+    "Ghana", "Haiti", "Iran", "Iraq","Ivory Coast", "Japan", "Jordan",
+    "South Korea", "Mexico", "Morocco", "Netherlands", "New Zealand",
+    "Norway", "Panama", "Paraguay", "Portugal", "Qatar", "Saudi Arabia",
+    "Scotland", "Senegal", "South Africa", "Spain", "Sweden",
+    "Switzerland", "Tunisia", "Turkey", "United States", "Uruguay", "Uzbekistan"]
 
 wc_26_groups = {
     "Group A": ["Mexico", "South Africa", "South Korea", "Czechia"],
@@ -472,21 +334,18 @@ wc_26_groups = {
 # 1. THE MATCH ENGINE
 # ==========================================
 def simulate_match(team_h, team_a, elos, is_knockout=False):
-    # Retrieves current Elos, builds the feature row, and uses XGBoost to predict.
+    # Retrieves current Elos, builds the feature row and uses XGBoost to predict
 
     # 1. Look up the current Elos for both teams
     elo_h = elos.get(team_h, 1500)
     elo_a = elos.get(team_a, 1500)
 
-    # 2. Build the feature array exactly how XGBoost expects it
-    # [elo_home, elo_away, neutral, k_20, k_30, k_40, k_50, k_60]
-    # Assuming World Cup matches are K_60 and Neutral=1
 
     match_ = pd.DataFrame([[elo_h-elo_a, 1, 0, 0, 0, 0, 1]],
                             columns=['elo_pre_diff', 'neutral',
                                      'k_20', 'k_30', 'k_40', 'k_50', 'k_60'])
 
-    # 3. Get probabilities [0:Draw, 1:Home Win, 2:Away Win]
+    # 3. Get probabilities 
     probs = wc_26_predictor.predict_proba(match_)[0]
 
     rand_roll = np.random.rand()
@@ -507,6 +366,7 @@ def simulate_match(team_h, team_a, elos, is_knockout=False):
         else:
           return team_a                              # Team AWAY wins
 
+# Match to test the method
 team_1 = 'Netherlands'
 team_2 = 'Japan'
 n_sims = 10000
@@ -531,10 +391,10 @@ print(f"{team_2} win: {(win_team_2/n_sims)*100:.2f}%")
 """## Simulate the Group Stage"""
 
 # ==========================================
-# 2. THE GROUP STAGE ENGINE (WITH Elo TIEBREAKER)
+# 2. THE GROUP STAGE ENGINE 
 # ==========================================
 def simulate_group(group, elos=current_elos):
-    # Simulates a single group and returns the standings dictionary.
+    # Simulates a single group and returns the standings as a dictionary.
     points = {team: 0 for team in group}
 
     # Play every combination of teams in the group
@@ -551,23 +411,22 @@ def simulate_group(group, elos=current_elos):
                 points[group[j]] += 1
 
     # Sort teams by points first, then by their current Elo rating as a tiebreaker
+    # (in reality is goal difference, etc.)
     standings = sorted(points.keys(),
                           key=lambda x: (points[x], elos.get(x, 1500)),
                           reverse=True)
 
-    # Create a sorted points dictionary based on the standings
     sorted_points = {team: points[team] for team in standings}
 
-    # Return the group standings list and the sorted points dictionary
     return sorted_points
 
+# Test the method on an actual group
 simulate_group(wc_26_groups['Group B'])
 
 def simulate_group_stage(groups, elos=current_elos):
     """
-    Simulates the group stage for all 12 groups.
-    Returns:
-        all_standings: Dict of group_name -> sorted_points_dict
+    Simulates the group stage for all 12 groups, returning 
+    all_standings: Dict of group_name -> sorted_points_dict
     """
     all_standings = {}
 
@@ -581,15 +440,13 @@ def simulate_group_stage(groups, elos=current_elos):
 all_standings = simulate_group_stage(wc_26_groups, current_elos)
 all_standings
 
-"""## Get the Knockout Stage
+"""Get the Knockout Stage"""
 
-### Get the match-ups involving best 8 Third Teams
-"""
+"""Get the match-ups involving best 8 Third Teams"""
 
 def get_best_third_place_groups(all_standings, elos):
     """
     Analyzes results from all 12 groups to find which 3rd-place teams advance.
-
     all_standings: Dictionary mapping Group Name (A-L) to the sorted points dict
                        returned by simulate_group.
     """
@@ -618,9 +475,11 @@ def get_best_third_place_groups(all_standings, elos):
     top_8_groups = sorted([c['group'] for c in ranked_candidates[:8]])
     return top_8_groups
 
+# testing the function
 advancing = get_best_third_place_groups(all_standings, current_elos)
 print(f"Advancing Third-Place Groups: {advancing}")
 
+# Class to extract the official match-ups involving the 8 best third teams 
 class WC_KOEngine:
     def __init__(self, raw_text):
         self.annex_c_table = {}
@@ -647,9 +506,6 @@ class WC_KOEngine:
                 self.annex_c_table[comb_key] = mapping
                 valid_rows_parsed += 1
 
-        # if valid_rows_parsed == 495:
-        #   print(f"Successfully loaded all {valid_rows_parsed} bracket combinations")
-
     def get_RO32_thirds(self, advancing_groups_list):
         """
         Pass a list of the 8 advancing third-place groups to get their matchups.
@@ -662,9 +518,9 @@ class WC_KOEngine:
                 f"Combination {advancing_groups_list} not found in the loaded data. "
                 "Ensure your raw text is complete and contains this combination."
             )
-
         return self.annex_c_table[combination_key]
 
+# Official match-ups from the Tournament Regulations-Annexe C
 annexe_c = """
 Option 1A 1B 1D 1E 1G 1I 1K 1L
 1 3E 3J 3I 3F 3H 3G 3L 3K
@@ -1166,7 +1022,7 @@ Option 1A 1B 1D 1E 1G 1I 1K 1L
 
 engine = WC_KOEngine(annexe_c)
 
-# 2. Passing a list of 8 advancing third-place teams
+# test the function
 third_place_matchups = engine.get_RO32_thirds(advancing)
 
 print("\nRound of 32 Pairings (Group Winners vs 3rd Place):")
@@ -1174,13 +1030,12 @@ for winner, opponent in third_place_matchups.items():
     print(f"Group {winner} plays {opponent}")
 print(third_place_matchups)
 
-"""### Get the full Round-of-32"""
-
+"""Get the true full Round-of-32"""
 def get_RO32(all_standings, third_place_matchups):
     """
     Takes the standings from all 12 groups and the mapping from WC_KOEngine,
     and returns a list of tuples representing the 16 matches for the Round of 32.
-
+    
     all_standings: Dict of group_name -> sorted_points_dict
     third_place_matchups: Output from engine.get_RO32_thirds(advancing_groups)
                           e.g., {'1A': '3E', '1B': '3G', ...}
@@ -1198,15 +1053,14 @@ def get_RO32(all_standings, third_place_matchups):
         if len(teams) >= 3:
             thirds[group_name] = teams[2]
 
-    # Helper to resolve "3X" identifiers to actual team names
     # Returns the name of the third team corresponding to the matchup involving
     # the first-classified team at hand, among all matchups involving third teams
     def get_third(winner_id):
         placeholder = third_place_matchups[winner_id] # e.g. "3E"
-        group_letter = placeholder[1] # extract "E"
+        group_letter = placeholder[1] # extracts "E"
         return thirds[group_letter]
 
-    # 2. Build the 16 matches based on the FIFA 2026 bracket
+    # 2. Build the 16 matches based on the 2026 knock-out brackets
     round_of_32 = [
         (seconds['A'], seconds['B']),       # M73
         (firsts['E'],  get_third('1E')),    # M74
@@ -1228,22 +1082,23 @@ def get_RO32(all_standings, third_place_matchups):
 
     return round_of_32
 
+# test the function
 round_of_32_matches = get_RO32(all_standings, third_place_matchups)
 round_of_32_matches
 
-"""## Simulate the Knockout Stage"""
+"""Simulate the Knockout Stage"""
 
 # ==========================================
-# 3. THE KNOCKOUT ENGINE (FIFA WC 2026 Format)
+# 3. THE KNOCKOUT ENGINE
 # ==========================================
 def simulate_knockouts(round_of_32_matches, elos):
     """
     Takes the 16 exact matchups from the Round of 32 and routes them through
-    the official FIFA 2026 bracket structure to crown a Champion.
+    the official 2026 bracket structure to crown a Champion.
     """
     w = {} # A dictionary to store the 'Winner' of each specific Match Number
 
-    # --- ROUND OF 32 (Matches 73 to 88) ---
+    # ROUND OF 32 (Matches 73 to 88)
     # The input list is 0-indexed, so index 0 = M73, index 15 = M88
     for i in range(16):
         match_num = 73 + i
@@ -1252,7 +1107,7 @@ def simulate_knockouts(round_of_32_matches, elos):
 
         w[match_num] = simulate_match(team_h, team_a, elos, is_knockout=True)
 
-    # --- ROUND OF 16 (Matches 89 to 96) ---
+    # ROUND OF 16 (Matches 89 to 96)
     w[89] = simulate_match(w[74], w[77], elos, is_knockout=True)
     w[90] = simulate_match(w[73], w[75], elos, is_knockout=True)
     w[91] = simulate_match(w[76], w[78], elos, is_knockout=True)
@@ -1262,63 +1117,45 @@ def simulate_knockouts(round_of_32_matches, elos):
     w[95] = simulate_match(w[86], w[88], elos, is_knockout=True)
     w[96] = simulate_match(w[85], w[87], elos, is_knockout=True)
 
-    # --- QUARTERFINALS (Matches 97 to 100) ---
+    # QUARTERFINALS (Matches 97 to 100)
     # Based on the official FIFA continuation of those R16 brackets
     w[97]  = simulate_match(w[89], w[90], elos, is_knockout=True)
     w[98]  = simulate_match(w[93], w[94], elos, is_knockout=True)
     w[99]  = simulate_match(w[91], w[92], elos, is_knockout=True)
     w[100] = simulate_match(w[95], w[96], elos, is_knockout=True)
 
-    # --- SEMIFINALS (Matches 101 to 102) ---
+    # SEMIFINALS (Matches 101 to 102)
     w[101] = simulate_match(w[97], w[98], elos, is_knockout=True)
     w[102] = simulate_match(w[99], w[100], elos, is_knockout=True)
 
-    # --- FINAL (Match 104) ---
-    # (Match 103 is the 3rd place playoff, which we skip for the championship sim)
+    # FINAL (Match 104)
+    # (Match 103 is the match for 3rd place, which I skip)
     champion = simulate_match(w[101], w[102], elos, is_knockout=True)
 
     return champion
 
+# test the function
 simulate_knockouts(round_of_32_matches, current_elos)
 
-"""## Simulate the whole tournament"""
+"""Simulate the whole tournament"""
 
 # ==========================================
-# 4. THE MONTE CARLO MASTER LOOP (Updated)
+# 4. THE MONTE CARLO SIMULATION
 # ==========================================
 
 def simulate_world_cup_26(n_simulations=10000, elos=current_elos):
     """
-    Runs the 2026 World Cup N times.
+    Runs the 2026 World Cup N times
     """
     champions_tracker = defaultdict(int)
 
-    # Define the 12 Groups (A through L)
-# 2026 World Cup groups
-    groups_2026 = {
-    "Group A": ["Mexico", "South Africa", "South Korea", "Czechia"],
-    "Group B": ["Canada", "Bosnia and Herzegovina", "Qatar", "Switzerland"],
-    "Group C": ["Brazil", "Morocco", "Haiti", "Scotland"],
-    "Group D": ["United States", "Paraguay", "Australia", "Turkey"],
-    "Group E": ["Germany", "Curaçao", "Ivory Coast", "Ecuador"],
-    "Group F": ["Netherlands", "Japan", "Sweden", "Tunisia"],
-    "Group G": ["Belgium", "Egypt", "Iran", "New Zealand"],
-    "Group H": ["Spain", "Cabo Verde", "Saudi Arabia", "Uruguay"],
-    "Group I": ["France", "Senegal", "Iraq", "Norway"],
-    "Group J": ["Argentina", "Algeria", "Austria", "Jordan"],
-    "Group K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
-    "Group L": ["England", "Croatia", "Ghana", "Panama"]
-}
-
     print(f"Simulating the 2026 World Cup {n_simulations} times...")
 
-    # ---------------------------------------------------------
     # THE MONTE CARLO LOOP
-    # ---------------------------------------------------------
     for i in range(n_simulations):
 
         # Step 1: Simulate all 12 Groups
-        all_standings = simulate_group_stage(groups_2026)
+        all_standings = simulate_group_stage(wc_26_groups)
 
         # Step 2: Find the match-ups involving the 8 best thirds
         advancing_groups = get_best_third_place_groups(all_standings, elos)
@@ -1338,9 +1175,7 @@ def simulate_world_cup_26(n_simulations=10000, elos=current_elos):
         if (i + 1) % 500 == 0:
             print(f"Completed {i + 1} simulations out of {n_simulations}...")
 
-    # ---------------------------------------------------------
     # AGGREGATE AND PRINT RESULTS
-    # ---------------------------------------------------------
     print("\n=======================================")
     print(" 2026 WORLD CUP CHAMPION PROBABILITIES")
     print("=======================================")
@@ -1352,134 +1187,16 @@ def simulate_world_cup_26(n_simulations=10000, elos=current_elos):
         if win_prob > 0:
             print(f"{rank}. {team}: {win_prob:.2f}%")
 
-"""# Predict the 2026 World Cup"""
-
-wc_teams = ["Algeria", "Argentina", "Australia", "Austria", "Belgium",
-    "Bosnia and Herzegovina", "Brazil", "Cabo Verde", "Canada",
-    "Colombia", "DR Congo", "Croatia", "Curaçao",
-    "Czechia", "Ecuador", "Egypt", "England", "France", "Germany",
-    "Ghana", "Haiti", "Iran", "Iraq","Ivory Coast", "Japan", "Jordan",
-    "South Korea", "Mexico", "Morocco", "Netherlands", "New Zealand",
-    "Norway", "Panama", "Paraguay", "Portugal", "Qatar", "Saudi Arabia",
-    "Scotland", "Senegal", "South Africa", "Spain", "Sweden",
-    "Switzerland", "Tunisia", "Turkey", "United States", "Uruguay", "Uzbekistan"]
-
-wc_26_groups = {
-    "Group A": ["Mexico", "South Africa", "South Korea", "Czechia"],
-    "Group B": ["Canada", "Bosnia and Herzegovina", "Qatar", "Switzerland"],
-    "Group C": ["Brazil", "Morocco", "Haiti", "Scotland"],
-    "Group D": ["United States", "Paraguay", "Australia", "Turkey"],
-    "Group E": ["Germany", "Curaçao", "Ivory Coast", "Ecuador"],
-    "Group F": ["Netherlands", "Japan", "Sweden", "Tunisia"],
-    "Group G": ["Belgium", "Egypt", "Iran", "New Zealand"],
-    "Group H": ["Spain", "Cabo Verde", "Saudi Arabia", "Uruguay"],
-    "Group I": ["France", "Senegal", "Iraq", "Norway"],
-    "Group J": ["Argentina", "Algeria", "Austria", "Jordan"],
-    "Group K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
-    "Group L": ["England", "Croatia", "Ghana", "Panama"]
-}
+"""Predict the 2026 World Cup"""
 
 # To find which group a specific team belongs to
 target_team = 'Jordan'
 found_group = next((group for group, teams in wc_26_groups.items() if target_team in teams), "Team not found")
-
 print(f"{target_team} is in {found_group}")
 
+# Removing all teams not in WC26
 current_elos = {team: elo for team, elo in current_elos.items() if team in wc_teams}
-# Sorting the dictionary by keys (team names) alphabetically
 current_elos = dict(sorted(current_elos.items()))
 print(f"Number of teams: {len(current_elos)}")
-current_elos
 
 simulate_world_cup_26(10000, current_elos)
-
-"""## Prediction after Group Stage
-Now I update my prediction based on the actual Round-of-32 match-ups. \
-I also update the Elo scores according to the actual Group Stage.
-"""
-
-# Download latest version of the dataset
-path = kagglehub.dataset_download("martj42/international-football-results-from-1872-to-2017")
-
-group_stage_results = pd.read_csv(os.path.join(path, 'results.csv'))
-
-group_stage_results = group_stage_results[(group_stage_results['date'] >= '2026-06-11') & (group_stage_results['date'] < '2026-06-28')]
-
-for idx, row in group_stage_results.iterrows():
-    elo_score.process_match(
-        home_team=row['home_team'],
-        away_team=row['away_team'],
-        home_score=row['home_score'],
-        away_score=row['away_score'],
-        tournament=row['tournament'],
-        is_neutral=row['neutral']
-    )
-
-# Update current_elos and filter for the 48 participating teams
-current_elos = {team: elo for team, elo in elo_score.ratings.items() if team in wc_teams}
-current_elos = dict(sorted(current_elos.items()))
-
-print("Top 5 updated ratings:")
-print(pd.Series(current_elos).sort_values(ascending=False).head(5))
-
-def simulate_KO_world_cup_26(round_of_32_matches, n_simulations=10000, elos=current_elos):
-    """
-    Runs the 2026 World Cup Knockout stage N times based on the actual RO32.
-    """
-    champions_tracker = defaultdict(int)
-
-    print(f"Simulating the 2026 World Cup Knockout Stage {n_simulations} times...")
-
-    # ---------------------------------------------------------
-    # THE MONTE CARLO LOOP
-    # ---------------------------------------------------------
-    for i in range(n_simulations):
-
-        # Step 4: Run the Knockout Engine (Matches 73 through 104)
-        champion = simulate_knockouts(round_of_32_matches, current_elos)
-
-        # Step 5: Log the champion
-        champions_tracker[champion] += 1
-
-        # Print progress to the console
-        if (i + 1) % 500 == 0:
-            print(f"Completed {i + 1} simulations out of {n_simulations}...")
-
-    # ---------------------------------------------------------
-    # AGGREGATE AND PRINT RESULTS
-    # ---------------------------------------------------------
-    print("\n======================================================")
-    print(" 2026 WORLD CUP CHAMPION PROBABILITIES (ACTUAL RO32)")
-    print("======================================================")
-
-    results = {team: (wins / n_simulations) * 100 for team, wins in champions_tracker.items()}
-    sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)
-
-    for rank, (team, win_prob) in enumerate(sorted_results, 1):
-        if win_prob > 0:
-            print(f"{rank}. {team}: {win_prob:.2f}%")
-
-round_of_32_matches = [
-        # (seconds['A'], seconds['B']),       # M73
-        # (firsts['E'],  get_third('1E')),    # M74
-        # (firsts['F'],  seconds['C']),       # M75
-        # (firsts['C'],  seconds['F']),       # M76
-        # (firsts['I'],  get_third('1I')),    # M77
-        # (seconds['E'], seconds['I']),       # M78
-        # (firsts['A'],  get_third('1A')),    # M79
-        # (firsts['L'],  get_third('1L')),    # M80
-        # (firsts['D'],  get_third('1D')),    # M81
-        # (firsts['G'],  get_third('1G')),    # M82
-        # (seconds['K'], seconds['L']),       # M83
-        # (firsts['H'],  seconds['J']),       # M84
-        # (firsts['B'],  get_third('1B')),    # M85
-        # (firsts['J'],  seconds['H']),       # M86
-        # (firsts['K'],  get_third('1K')),    # M87
-        # (seconds['D'], seconds['G'])        # M88
-    ]
-
-simulate_KO_world_cup_26(round_of_32_matches, 10000, current_elos)
-
-"""## More Features
-To get a more comprehensive model I could add some additional features to the model, like team market value and the official FIFA ranking positions.  
-"""
