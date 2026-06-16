@@ -96,7 +96,7 @@ with tab1:
     search_team = st.selectbox(
         "Select a team to find their World Cup Group:", 
         team_list, 
-        index=team_list.index("Argentina") if "Argentina" in team_list else 0
+        index=team_list.index("Mexico") if "Mexico" in team_list else 0
     )
 
     if search_team:
@@ -124,12 +124,12 @@ with tab1:
 
     col1, col2 = st.columns(2)
 
-    selectable_teams = ["Select a team..."] + team_list
+    selectable_teams = ["Select a team"] + team_list
 
     with col1:
         h_selection = st.selectbox("Home Team", selectable_teams, index=0)
         
-        if h_selection != "Select a team...":
+        if h_selection != "Select a team":
             team_h = h_selection
             elo_h = get_clean_elo(team_h)
             st.info(f"Current ELO: **{elo_h:.1f}**")
