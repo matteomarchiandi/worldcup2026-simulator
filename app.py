@@ -82,7 +82,7 @@ wc_26_groups = {
     "Group K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
     "Group L": ["England", "Croatia", "Ghana", "Panama"]
 }
-st.markdown("---")# --- App Navigation (Tabs) ---
+# --- App Navigation (Tabs) ---
 tab1, tab2 = st.tabs(["⚽ Match Simulator", "🏆 Power Rankings"])
 
 
@@ -116,7 +116,8 @@ with tab1:
                         st.info(team)
         else:
             st.warning("This team was not found in the 2026 World Cup groups definition.")
-
+            
+    st.markdown("---")
     st.subheader("Match Setup")
 
     if not team_list:
@@ -150,7 +151,6 @@ with tab1:
             team_a = None
             st.info("Select a team to see their ELO.")
 
-    st.markdown("---")
     # --- Match Settings ---
     st.markdown("### Simulation Settings")
     is_knockout = st.checkbox("Knockout Match (no draws allowed)", value=False)
@@ -244,7 +244,7 @@ with tab2:
         st.dataframe(
             df_ranks.style.format({"ELO Rating": "{:.1f}"}), 
             use_container_width=True,
-            height=1000
+            height=500
         )
         
     with colB:
