@@ -159,7 +159,7 @@ with tab1:
     # --- Simulation Logic ---
     if st.button("Simulate Match", type="primary"):
         if not team_h or not team_a:
-            st.warning("⚠️ Please select both a Home Team and an Away Team before simulating!")
+            st.warning("⚠️ Please select a Home Team and an Away Team to simulate the match!")
         else:
             elo_diff = elo_h - elo_a
             match_features = pd.DataFrame(
@@ -190,7 +190,6 @@ with tab1:
                         win_team_2 += 1
 
             # --- Display Results ---
-            st.markdown("---")
             st.subheader("📊 Simulation Results")
             
             p_team_1 = (win_team_1 / n_sims) * 100
