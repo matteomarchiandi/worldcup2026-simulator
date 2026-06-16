@@ -199,7 +199,15 @@ results_xgb = pd.get_dummies(results_xgb, columns=['tournament_k'], prefix='k', 
 results_xgb = results_xgb[ results_xgb['date'] > '2000-01-01' ].reset_index(drop=True)
 results_xgb
 
-"""### Split data into Training and Test Sets"""
+"""Look for match outcome imbalances"""
+plt.figure(figsize=(8, 5))
+sbn.countplot(data=results_xgb, x='match_outcome', hue='match_outcome', palette='magma', legend=False)
+plt.title('Distribution of Match Outcomes')
+plt.xlabel('Outcome (0: Draw, 1: Home Win, 2: Away Win)')
+plt.ylabel('Count')
+plt.show()
+
+"""Split data into Training and Test Sets"""
 
 train_res = results_xgb[ results_xgb['date'] < '2022-11-20' ]
 test_res = results_xgb[ (results_xgb['date'] > '2022-11-20') & (results_xgb['date'] < '2026-06-11') ]
