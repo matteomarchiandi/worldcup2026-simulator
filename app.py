@@ -305,7 +305,7 @@ with tab3:
         )
         
     with colB:
-        st.markdown("**Top 15 Teams Worldwide**")
+        st.markdown("**Top 15 Teams**")
         # Plot a horizontal bar chart of just the Top 15 teams
         fig_rank, ax_rank = plt.subplots(figsize=(8, 10))
         sns.barplot(data=df_ranks.head(15), x="ELO Rating", y="Team", palette="viridis", ax=ax_rank)
