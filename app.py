@@ -9,7 +9,7 @@ from xgboost import XGBClassifier
 # Set page configuration
 st.set_page_config(page_title="World Cup 2026 Match Predictor", page_icon="⚽", layout="centered")
 
-st.title("⚽ 2026 World Cup Match Simulator")
+st.title("🌍 2026 World Cup Match Simulator")
 st.markdown("Select two teams to simulate a single match based on their ELO ratings and the trained XGBoost model (data last updated on 2026-06-10).")
 
 # --- Load Pre-computed Data & Model ---
@@ -33,19 +33,19 @@ except FileNotFoundError:
     st.stop()
 
 def get_clean_elo(team_name):
-    # Safety check for empty team names on first load
+    # 1. Safety check for empty team names on first load
     if not team_name:
         return 1500.0
         
     try:
-        # Safely get the value (defaulting to 1500 if missing)
+        # 2. Safely get the value (defaulting to 1500 if missing)
         val = current_elos.get(team_name, 1500.0)
         
-        # Handle if the value is a list (e.g., [1400, 1450, 1500])
+        # 3. Handle if the value is a list (e.g., [1400, 1450, 1500])
         if isinstance(val, list):
             val = val[-1]
             
-        # Handle if the value is a dictionary (e.g., {"rating": 1500, "matches": 10})
+        # 4. Handle if the value is a dictionary (e.g., {"rating": 1500, "matches": 10})
         elif isinstance(val, dict):
             # Guess the most common keys for ELO
             if "rating" in val:
@@ -56,11 +56,11 @@ def get_clean_elo(team_name):
                 # Just grab the first value in the dictionary as a fallback
                 val = list(val.values())[0]
                 
-        # Force it to a decimal
+        # 5. Force it to a decimal
         return float(val)
         
     except Exception as e:
-        # If it crashes, this will print the exact reason
+        # If it STILL crashes, this will print the exact reason on your app screen!
         st.error(f"🚨 **Data Error for {team_name}:**")
         st.write(f"The raw value pulled from JSON is: `{val}` (Type: {type(val)})")
         st.write(f"The exact error is: `{e}`")
@@ -82,9 +82,9 @@ wc_26_groups = {
     "Group K": ["Portugal", "DR Congo", "Uzbekistan", "Colombia"],
     "Group L": ["England", "Croatia", "Ghana", "Panama"]
 }
+st.markdown("---")# --- App Navigation (Tabs) ---
+tab1, tab2, tab3 = st.tabs(["⚽ Match Simulator", "🏆 Winning Probability", "📈 Power Rankings"])
 
-# --- App Navigation (Tabs) ---
-tab1, tab2 = st.tabs(["⚽ Match Simulator", "🏆 Power Rankings"])
 
 # ==========================================
 # TAB 1: MATCH SIMULATOR
@@ -96,7 +96,7 @@ with tab1:
     search_team = st.selectbox(
         "Select a team to find their World Cup Group:", 
         team_list, 
-        index=team_list.index("Mexico") if "Mexico" in team_list else 0
+        index=team_list.index("Argentina") if "Argentina" in team_list else 0
     )
 
     if search_team:
@@ -115,9 +115,8 @@ with tab1:
                         st.info(team)
         else:
             st.warning("This team was not found in the 2026 World Cup groups definition.")
-            
-    st.markdown("---")
-    st.subheader("Match Setup")
+
+    st.subheader("⚽ Match Setup")
 
     if not team_list:
         st.error("⚠️ No teams found! Please check your `current_elos.json` file.")
@@ -150,6 +149,7 @@ with tab1:
             team_a = None
             st.info("Select a team to see their ELO.")
 
+    st.markdown("---")
     # --- Match Settings ---
     st.markdown("### Simulation Settings")
     is_knockout = st.checkbox("Knockout Match (no draws allowed)", value=False)
@@ -158,7 +158,7 @@ with tab1:
     # --- Simulation Logic ---
     if st.button("Simulate Match", type="primary"):
         if not team_h or not team_a:
-            st.warning("⚠️ Please select a Home Team and an Away Team to simulate the match!")
+            st.warning("⚠️ Please select both a Home Team and an Away Team before simulating!")
         else:
             elo_diff = elo_h - elo_a
             match_features = pd.DataFrame(
@@ -189,6 +189,7 @@ with tab1:
                         win_team_2 += 1
 
             # --- Display Results ---
+            st.markdown("---")
             st.subheader("📊 Simulation Results")
             
             p_team_1 = (win_team_1 / n_sims) * 100
@@ -215,12 +216,70 @@ with tab1:
             ax.set_xlabel("Probability (%)")
             st.pyplot(fig)
 
-
 # ==========================================
-# TAB 2: POWER RANKINGS
+# TAB 2: STATIC SIMULATION RESULTS
 # ==========================================
 with tab2:
-    st.subheader("🏆 Power Rankings")
+    st.subheader("🏆 Full Tournament Prediction Results")
+    st.markdown("These graphics show the winning probability of a team calculated across **10,000 Monte Carlo simulations** of the full tournament using the model trained.")
+    
+    # Hard-coded results based on your XGBoost model's output
+    # Numbers represent total tournament wins out of 10,000 simulations
+    static_probabilities = {
+        "Spain": 18.46, "Argentina": 17.61, "France": 11.11, "England": 8.44,
+        "Brazil": 6.75, "Colombia": 5.41, "Portugal": 4.71, "Ecuador": 3.42,
+        "Netherlands": 3.35, "Germany": 3.26, "Belgium": 2.37, "Japan": 2.03,
+        "Morocco": 1.76, "Croatia": 1.63, "Uruguay": 1.34, "Mexico": 1.23,
+        "Turkey": 1.16, "Norway": 0.94, "Switzerland": 0.88, "Canada": 0.56,
+        "South Korea": 0.48, "Paraguay": 0.47, "Iran": 0.42, "Senegal": 0.39,
+        "Australia": 0.34, "Austria": 0.19, "Panama": 0.18, "Algeria": 0.18,
+        "Czechia": 0.14, "Uzbekistan": 0.14, "United States": 0.09, "Scotland": 0.09,
+        "Jordan": 0.07, "Ivory Coast": 0.07, "DR Congo": 0.06, "Iraq": 0.04,
+        "Egypt": 0.04, "Sweden": 0.03, "Curaçao": 0.03, "New Zealand": 0.03,
+        "Tunisia": 0.02, "Bosnia and Herzegovina": 0.02, "Haiti": 0.02,
+        "South Africa": 0.02, "Cabo Verde": 0.01, "Ghana": 0.01
+    }
+        
+    # Convert the direct probabilities directly to a DataFrame
+    df_static = pd.DataFrame(list(static_probabilities.items()), columns=["Team", "Win Probability (%)"])
+    
+    # Sort from highest to lowest probability
+    df_static = df_static.sort_values(by="Win Probability (%)", ascending=False).reset_index(drop=True)
+    df_static.index += 1
+    
+    # Create the Layout
+    col_left, col_right = st.columns([1, 1.5])
+    
+    with col_left:
+        st.markdown("**Leaderboard Data**")
+        st.dataframe(
+            df_static.style.format({"Win Probability (%)": "{:.2f}%"}), 
+            use_container_width=True,
+            height=500 
+        )
+        
+    with col_right:
+        st.markdown("**Visual Probabilities (Top 15)**")
+        fig_static, ax_static = plt.subplots(figsize=(8, 8))
+        
+        # Show the top 15 teams in the chart for a better overview
+        sns.barplot(
+            data=df_static.head(15), 
+            x="Win Probability (%)", 
+            y="Team", 
+            palette="flare", 
+            ax=ax_static
+        )
+        ax_static.set_xlabel("Probability to Win the World Cup (%)")
+        ax_static.set_ylabel("")
+        st.pyplot(fig_static)
+
+
+# ==========================================
+# TAB 3: POWER RANKINGS
+# ==========================================
+with tab3:
+    st.subheader("📈 Power Rankings")
     st.markdown("Current ELO scores for the 2026 World Cup teams.")
     
     # 1. Create a clean list of all teams and their ELOs using our safe function
@@ -242,7 +301,7 @@ with tab2:
         st.dataframe(
             df_ranks.style.format({"ELO Rating": "{:.1f}"}), 
             use_container_width=True,
-            height=500
+            height=1000
         )
         
     with colB:
