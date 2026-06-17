@@ -156,7 +156,7 @@ with tab1:
     n_sims = st.slider("Number of Match Simulations", min_value=500, max_value=10000, value=5000, step=1000)
 
     # --- Simulation Logic ---
-        if st.button("Simulate Match", type="primary"):
+    if st.button("Simulate Match", type="primary"):
         if not team_h or not team_a:
             st.warning("⚠️ Please select both a Home Team and an Away Team before simulating!")
         else:
