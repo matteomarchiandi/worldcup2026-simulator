@@ -223,10 +223,7 @@ plt.xticks([])
 plt.title('Distribution of neutral Matches')
 plt.show()
 
-# ==========================================================
-# DATA AUGMENTATION: INTERLEAVING MIRRORED NEUTRAL MATCHES
-# ==========================================================
-
+# Data Augmentation for neutral matches
 # 1. Create a sorting key to preserve order (even numbers for original rows)
 results_xgb['sort_key'] = results_xgb.index * 2
 
@@ -253,11 +250,7 @@ neutral_matches['sort_key'] = neutral_matches.index * 2 + 1
 results_xgb = pd.concat([results_xgb, neutral_matches])
 results_xgb = results_xgb.sort_values('sort_key').drop(columns=['sort_key']).reset_index(drop=True)
 
-print(f"Interleaved {len(neutral_matches)} neutral matches directly after their originals.")
-print(f"Final dataset size ready for XGBoost: {len(results_xgb)} rows.")
-
 results_xgb
-
 
 """Split data into Training and Test Sets"""
 train_res = results_xgb[ results_xgb['date'] < '2022-11-20' ]
@@ -279,14 +272,10 @@ model = XGBClassifier(
     n_estimators=300,       
     objective='multi:softprob',
     learning_rate=0.1,    
-    max_depth=4,           
-    # subsample=0.8,          
+    max_depth=4,                  
     random_state=42)
 
 model.fit(X_train, y_train)
-
-# model.predict_proba(X_test)
-# model.predict(X_test)
 
 predicted_probabilities = model.predict_proba(X_test)
 predictions = model.predict(X_test)
@@ -339,7 +328,7 @@ wc_26_predictor = XGBClassifier(
     objective='multi:softprob',
     learning_rate=0.1,     # Slow learning rate for better generalization
     max_depth=4,            # Keep trees shallow to prevent overfitting
-    # subsample=0.8,          # Use 80% of data per tree to add randomness
+    subsample=0.8,          # Use 80% of data per tree to add randomness
     random_state=42)
 
 wc_26_predictor.fit(X_train, y_train)
