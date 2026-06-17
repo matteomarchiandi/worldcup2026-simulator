@@ -333,3 +333,15 @@ with tab3:
         ax_rank.set_ylabel("")
         
         st.pyplot(fig_rank)
+
+st.markdown("---")  # Adds a clean separating line
+st.markdown(
+    """
+    <div style="text-align: center; color: gray; font-size: 0.8em;">
+        ⚠️ <strong>Disclaimer:</strong> this application is an independent data science project developed for educational and demonstration purposes. 
+        All predictions and probabilities are generated using a machine learning model based on historical data and do not constitute official forecasts, 
+        guarantees of match outcomes or betting advice in any way, shape or form.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
