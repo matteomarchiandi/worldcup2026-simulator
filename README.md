@@ -22,6 +22,7 @@ Default is 10,000 simulations of the entire tournament returning the estimated p
 
 ## 💻 The Streamlit Web App
 https://worldcup2026-simulator.streamlit.app/
+
 The project includes an interactive web application built with Streamlit:
 
 - Head to Head matchups, where the user can select any two national teams to get the model's predicted probabilities for a Win/Draw/Loss in a single match
