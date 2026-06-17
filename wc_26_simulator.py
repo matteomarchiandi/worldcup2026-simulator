@@ -1,3 +1,5 @@
+""" Preliminary Analysis and Building of the Model"""
+
 import pandas as pd
 import numpy as np
 import os
@@ -199,7 +201,8 @@ results_xgb = pd.get_dummies(results_xgb, columns=['tournament_k'], prefix='k', 
 results_xgb = results_xgb[ results_xgb['date'] > '2000-01-01' ].reset_index(drop=True)
 results_xgb
 
-"""Look for match outcome imbalances"""
+
+"""Look for data imbalances"""
 plt.figure(figsize=(8, 5))
 sbn.countplot(data=results_xgb, x='match_outcome', hue='match_outcome', palette='magma', legend=False)
 plt.title('Distribution of Match Outcomes')
@@ -207,8 +210,56 @@ plt.xlabel('Outcome (0: Draw, 1: Home Win, 2: Away Win)')
 plt.ylabel('Count')
 plt.show()
 
-"""Split data into Training and Test Sets"""
+plt.figure(figsize=(8, 5))
+sbn.histplot(
+    data=results_xgb, 
+    x="neutral", 
+    stat="proportion",  # Changes y-axis to percentages (use "proportion" for 0-1 scale)
+    discrete=True,   # Treats the x-axis as categorical
+    hue='neutral', palette='magma',
+    shrink=0.7      # Adds space between bars, mimicking a countplot
+)
+plt.xticks([])
+plt.title('Distribution of neutral Matches')
+plt.show()
 
+# ==========================================================
+# DATA AUGMENTATION: INTERLEAVING MIRRORED NEUTRAL MATCHES
+# ==========================================================
+
+# 1. Create a sorting key to preserve order (even numbers for original rows)
+results_xgb['sort_key'] = results_xgb.index * 2
+
+# 2. Isolate neutral matches
+neutral_matches = results_xgb[results_xgb['neutral'] == 1].copy()
+
+# 3. Swap the underlying base stats (home/away pre_elos)
+temp_elo = neutral_matches['home_pre_elo'].copy()
+neutral_matches['home_pre_elo'] = neutral_matches['away_pre_elo']
+neutral_matches['away_pre_elo'] = temp_elo
+
+# 4. Invert the Engineered Feature
+neutral_matches['elo_pre_diff'] = neutral_matches['elo_pre_diff'] * -1
+
+# 5. Invert the Target Variable
+# 0 = Draw, 1 = Home Win (becomes 2), 2 = Away Win (becomes 1)
+target_mapping = {0: 0, 1: 2, 2: 1}
+neutral_matches['match_outcome'] = neutral_matches['match_outcome'].map(target_mapping)
+
+# 6. Assign odd sorting keys to duplicated rows so they immediately follow their originals
+neutral_matches['sort_key'] = neutral_matches.index * 2 + 1
+
+# 7. Combine, sort by the key, and clean up
+results_xgb = pd.concat([results_xgb, neutral_matches])
+results_xgb = results_xgb.sort_values('sort_key').drop(columns=['sort_key']).reset_index(drop=True)
+
+print(f"Interleaved {len(neutral_matches)} neutral matches directly after their originals.")
+print(f"Final dataset size ready for XGBoost: {len(results_xgb)} rows.")
+
+results_xgb
+
+
+"""Split data into Training and Test Sets"""
 train_res = results_xgb[ results_xgb['date'] < '2022-11-20' ]
 test_res = results_xgb[ (results_xgb['date'] > '2022-11-20') & (results_xgb['date'] < '2026-06-11') ]
 
@@ -239,7 +290,6 @@ model.fit(X_train, y_train)
 
 predicted_probabilities = model.predict_proba(X_test)
 predictions = model.predict(X_test)
-
 
 print("Accuracy on Test Set:", accuracy_score(y_test, predictions))
 print("Log Loss (the lower the better):", log_loss(y_test, predicted_probabilities, labels=[0,1,2]))
@@ -278,11 +328,9 @@ Now I re-train the model using all data available, including the matches just us
 Since the importance of home and away teams' Elo is low, I decide to consider only Elo difference during the training proces.
 """
 
-train_res = results_xgb[ results_xgb['date'] < '2026-06-11' ]
 drop_cols = ['date', 'home_pre_elo', 'away_pre_elo', 'match_outcome']
-
-X_train = train_res.drop(columns=drop_cols)
-y_train = train_res['match_outcome']
+X_train = results_xgb.drop(columns=drop_cols)
+y_train = results_xgb['match_outcome']
 
 X_train
 
@@ -342,42 +390,63 @@ wc_26_groups = {
 # 1. THE MATCH ENGINE
 # ==========================================
 def simulate_match(team_h, team_a, elos, is_knockout=False):
-    # Retrieves current Elos, builds the feature row and uses XGBoost to predict
+    # Retrieves current Elos, builds the feature rows, and predicts twice to remove bias
 
     # 1. Look up the current Elos for both teams
     elo_h = elos.get(team_h, 1500)
     elo_a = elos.get(team_a, 1500)
 
-
-    match_ = pd.DataFrame([[elo_h-elo_a, 1, 0, 0, 0, 0, 1]],
+    # 2a. Build feature array (Forward: team_h as Home, team_a as Away)
+    match_forward = pd.DataFrame([[elo_h - elo_a, 1, 0, 0, 0, 0, 1]],
+                            columns=['elo_pre_diff', 'neutral',
+                                     'k_20', 'k_30', 'k_40', 'k_50', 'k_60'])
+                                     
+    # 2b. Build feature array (Backward: team_a as Home, team_h as Away)
+    # Notice that the elo difference is flipped!
+    match_backward = pd.DataFrame([[elo_a - elo_h, 1, 0, 0, 0, 0, 1]],
                             columns=['elo_pre_diff', 'neutral',
                                      'k_20', 'k_30', 'k_40', 'k_50', 'k_60'])
 
-    # 3. Get probabilities 
-    probs = wc_26_predictor.predict_proba(match_)[0]
+    # 3. Get probabilities [0:Draw, 1:Home Win, 2:Away Win]
+    probs_forward = wc_26_predictor.predict_proba(match_forward)[0]
+    probs_backward = wc_26_predictor.predict_proba(match_backward)[0]
 
+    # 4. Inference Averaging: Align and average the probabilities
+    # probs_forward[1] = team_h win. probs_backward[2] = team_h win (when they are placed away)
+    win_h_avg = (probs_forward[1] + probs_backward[2]) / 2
+    
+    # probs_forward[2] = team_a win. probs_backward[1] = team_a win (when they are placed home)
+    win_a_avg = (probs_forward[2] + probs_backward[1]) / 2
+    
+    # Draw probability is always index 0
+    draw_avg = (probs_forward[0] + probs_backward[0]) / 2
+
+    # 5. Execute the Monte Carlo Dice Roll
     rand_roll = np.random.rand()
+    
     if is_knockout:
         # Re-distribute the draw probability for elimination games
-        win_h = probs[1] + (probs[0] / 2)
-        win_a = probs[2] + (probs[0] / 2)
+        win_h = win_h_avg + (draw_avg / 2)
+        win_a = win_a_avg + (draw_avg / 2)
+        
         if rand_roll < win_h:
-          return team_h
+            return team_h
         else:
-          return team_a
+            return team_a
     else:
         # Standard group stage match (Draws allowed)
-        if rand_roll < probs[1]:
-          return team_h           # Team HOME wins
-        elif rand_roll < probs[0] + probs[1]:
-          return "Draw"
+        if rand_roll < win_h_avg:
+            return team_h           # Team HOME wins
+        elif rand_roll < draw_avg + win_h_avg:
+            return "Draw"
         else:
-          return team_a                              # Team AWAY wins
+            return team_a           # Team AWAY wins
+
 
 # Match to test the method
-team_1 = 'Netherlands'
-team_2 = 'Japan'
-n_sims = 10000
+team_1 = 'France'
+team_2 = 'Brazil'
+n_sims = 1000
 
 win_team_1 = 0
 win_team_2 = 0
@@ -397,7 +466,6 @@ print(f"Draw: {(draw/n_sims)*100:.2f}%")
 print(f"{team_2} win: {(win_team_2/n_sims)*100:.2f}%")
 
 """## Simulate the Group Stage"""
-
 # ==========================================
 # 2. THE GROUP STAGE ENGINE 
 # ==========================================
