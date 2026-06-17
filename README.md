@@ -38,4 +38,4 @@ International Matches: Historical match results since 1872.
 One could also consider additional features such as teams market value, World Ranking and recent form.
 
 
-⚠️ Disclaimer: this project is an independent data science project developed for educational and demonstration purposes. All predictions and probabilities are generated using a machine learning model based on historical data and do not constitute official forecasts, guarantees of match outcomes or betting advice in any way, shape or form.
+⚠️ **Disclaimer**: this is an independent data science project developed for educational and demonstration purposes. All predictions and probabilities are generated using a machine learning model based on historical data and do not constitute official forecasts, guarantees of match outcomes or betting advice in any way, shape or form.
