@@ -156,34 +156,50 @@ with tab1:
     n_sims = st.slider("Number of Match Simulations", min_value=500, max_value=10000, value=5000, step=1000)
 
     # --- Simulation Logic ---
-    if st.button("Simulate Match", type="primary"):
+        if st.button("Simulate Match", type="primary"):
         if not team_h or not team_a:
-            st.warning("⚠️ Please select a Home Team and an Away Team to simulate a match")
+            st.warning("⚠️ Please select both a Home Team and an Away Team before simulating!")
         else:
-            elo_diff = elo_h - elo_a
-            match_features = pd.DataFrame(
-                [[elo_diff, 1, 0, 0, 0, 0, 1]],
+           # 1. Build BOTH feature arrays (Forward and Backward)
+            match_forward = pd.DataFrame(
+                [[elo_h - elo_a, 1, 0, 0, 0, 0, 1]],
+                columns=['elo_pre_diff', 'neutral', 'k_20', 'k_30', 'k_40', 'k_50', 'k_60']
+            )
+            
+            match_backward = pd.DataFrame(
+                [[elo_a - elo_h, 1, 0, 0, 0, 0, 1]],
                 columns=['elo_pre_diff', 'neutral', 'k_20', 'k_30', 'k_40', 'k_50', 'k_60']
             )
 
-            probs = wc_26_predictor.predict_proba(match_features)[0]
+            # 2. Get probabilities for both scenarios 
+            probs_forward = wc_26_predictor.predict_proba(match_forward)[0]
+            probs_backward = wc_26_predictor.predict_proba(match_backward)[0]
+
+            # 3. Inference Averaging: Eliminate bias
+            win_h_avg = (probs_forward[1] + probs_backward[2]) / 2
+            win_a_avg = (probs_forward[2] + probs_backward[1]) / 2
+            draw_avg = (probs_forward[0] + probs_backward[0]) / 2
 
             win_team_1 = 0
             win_team_2 = 0
             draws = 0
 
+            # 4. Run the Monte Carlo Loop 
             for _ in range(n_sims):
                 rand_roll = np.random.rand()
+                
                 if is_knockout:
-                    win_h_prob = probs[1] + (probs[0] / 2)
+                    # Redistribute draws equally to both sides for knockout rules
+                    win_h_prob = win_h_avg + (draw_avg / 2)
                     if rand_roll < win_h_prob:
                         win_team_1 += 1
                     else:
                         win_team_2 += 1
                 else:
-                    if rand_roll < probs[1]:
+                    # Standard group stage rules
+                    if rand_roll < win_h_avg:
                         win_team_1 += 1
-                    elif rand_roll < probs[0] + probs[1]:
+                    elif rand_roll < win_h_avg + draw_avg:
                         draws += 1
                     else:
                         win_team_2 += 1
