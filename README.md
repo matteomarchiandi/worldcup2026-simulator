@@ -1,5 +1,4 @@
 # 🏆⚽ 2026 World Cup Simulator
-https://worldcup2026-simulator.streamlit.app/
 
 An end-to-end simulator designed to forecast the 2026 World Cup matches and the full tournament.
 
@@ -22,6 +21,7 @@ Simulates the full tournament multiple times from the group stage to the final, 
 Default is 10,000 simulations of the entire tournament returning the estimated probability of each team lifting the trophy.
 
 ## 💻 The Streamlit Web App
+https://worldcup2026-simulator.streamlit.app/
 The project includes an interactive web application built with Streamlit:
 
 - Head to Head matchups, where the user can select any two national teams to get the model's predicted probabilities for a Win/Draw/Loss in a single match
@@ -36,6 +36,5 @@ International Matches: Historical match results since 1872.
 # 📌 Further Improvements 
 One could also consider additional features such as teams market value, World Ranking and recent form.
 
-str.markdown("---")
 
 ⚠️ Disclaimer: this project is an independent data science project developed for educational and demonstration purposes. All predictions and probabilities are generated using a machine learning model based on historical data and do not constitute official forecasts, guarantees of match outcomes or betting advice in any way, shape or form.
