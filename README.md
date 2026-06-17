@@ -1,4 +1,4 @@
-# 🏆⚽ 2026 World Cup Simulator
+# 🏆 2026 World Cup Simulator
 
 An end-to-end simulator designed to forecast the 2026 World Cup matches and the full tournament.
 
@@ -11,11 +11,11 @@ Elo Score Tracker implemented to compute teams' current Elo ratings using dynami
 
 Historical international matches data (from 1872 to present) is pulled and feed into the Feature Engineering process.
 
-2. The Machine Learning Model (XGBoost)
+2. The Machine Learning Model
 
 The core predictive engine is a 3-class XGBoostClassifier trained on historical international matches between 2000-01-01 and 2026-06-10, handling neutral venue flags and World Cup-specific tournament weight.
 
-3. 🏆 The Monte Carlo Simulation Framework
+3. The Monte Carlo Simulation Framework
    
 Simulates the full tournament multiple times from the group stage to the final, using the official knockout stage scheme.
 Default is 10,000 simulations of the entire tournament returning the estimated probability of each team lifting the trophy.
