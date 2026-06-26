@@ -214,13 +214,13 @@ with tab1:
 
             if is_knockout:
                 m1, m2 = st.columns(2)
-                m1.metric(f"{team_h} Win Prob", f"{p_team_1:.1f}%")
-                m2.metric(f"{team_a} Win Prob", f"{p_team_2:.1f}%")
+                m1.metric(f"{team_h} Win Probability", f"{p_team_1:.1f}%")
+                m2.metric(f"{team_a} Win Probability", f"{p_team_2:.1f}%")
             else:
                 m1, m2, m3 = st.columns(3)
-                m1.metric(f"{team_h} Win Prob", f"{p_team_1:.1f}%")
-                m2.metric("Draw Prob", f"{p_draw:.1f}%")
-                m3.metric(f"{team_a} Win Prob", f"{p_team_2:.1f}%")
+                m1.metric(f"{team_h} Win Probability", f"{p_team_1:.1f}%")
+                m2.metric("Draw Probability", f"{p_draw:.1f}%")
+                m3.metric(f"{team_a} Win Probability", f"{p_team_2:.1f}%")
 
             fig, ax = plt.subplots(figsize=(6, 3))
             if is_knockout:
