@@ -237,23 +237,20 @@ with tab1:
 # ==========================================
 with tab2:
     st.subheader("🏆 Full Tournament Prediction Results")
-    st.markdown("These graphics show the winning probability of a team calculated across **10,000 Monte Carlo simulations** of the full tournament using the model trained.")
+    st.markdown("These graphics show the winning probability of a team calculated across **10,000 Monte Carlo simulations** of the knockout stage according to actual Round of 32 matches using the model trained.")
     
     # Hard-coded results based on your XGBoost model's output
     # Numbers represent total tournament wins out of 10,000 simulations
     static_probabilities = {
-        "Spain": 18.46, "Argentina": 17.61, "France": 11.11, "England": 8.44,
-        "Brazil": 6.75, "Colombia": 5.41, "Portugal": 4.71, "Ecuador": 3.42,
-        "Netherlands": 3.35, "Germany": 3.26, "Belgium": 2.37, "Japan": 2.03,
-        "Morocco": 1.76, "Croatia": 1.63, "Uruguay": 1.34, "Mexico": 1.23,
-        "Turkey": 1.16, "Norway": 0.94, "Switzerland": 0.88, "Canada": 0.56,
-        "South Korea": 0.48, "Paraguay": 0.47, "Iran": 0.42, "Senegal": 0.39,
-        "Australia": 0.34, "Austria": 0.19, "Panama": 0.18, "Algeria": 0.18,
-        "Czechia": 0.14, "Uzbekistan": 0.14, "United States": 0.09, "Scotland": 0.09,
-        "Jordan": 0.07, "Ivory Coast": 0.07, "DR Congo": 0.06, "Iraq": 0.04,
-        "Egypt": 0.04, "Sweden": 0.03, "Curaçao": 0.03, "New Zealand": 0.03,
-        "Tunisia": 0.02, "Bosnia and Herzegovina": 0.02, "Haiti": 0.02,
-        "South Africa": 0.02, "Cabo Verde": 0.01, "Ghana": 0.01
+        "Argentina": 25.00, "France": 17.62, "Spain": 15.35, "England": 7.44,
+        "Brazil": 7.20, "Colombia": 5.47, "Netherlands": 4.23, "Portugal": 3.87,
+        "Morocco": 2.11, "Belgium": 1.58, "Germany": 1.46, "Switzerland": 1.26,
+        "Mexico": 1.04, "Japan": 0.95, "Norway": 0.94, "Ecuador": 0.84,
+        "United States": 0.62, "Croatia": 0.56, "Canada": 0.36, "Senegal": 0.35,
+        "Australia": 0.31, "Egypt": 0.25, "Austria": 0.23, "Algeria": 0.23,
+        "Paraguay": 0.22, "Ghana": 0.14, "Ivory Coast": 0.11, "Sweden": 0.09,
+        "Bosnia and Herzegovina": 0.07, "South Africa": 0.05, "DR Congo": 0.03,
+        "Cape Verde": 0.02
     }
         
     # Convert the direct probabilities directly to a DataFrame
