@@ -34,8 +34,11 @@ The project includes an interactive web application built with Streamlit:
 ## 📊 Data Source
 International Matches: Historical match results since 1872.
 
+## ✨ Update
+Added the simulation of the knockout stage based on the actual Round of 32 matches.
+
 # 📌 Further Improvements 
-One could also consider additional features such as teams market value, World Ranking and recent form.
+Additional features can be considered, such as teams market value, World Ranking and recent form.
 
 
 ⚠️ **Disclaimer**: this is an independent data science project developed for educational and demonstration purposes. All predictions and probabilities are generated using a machine learning model based on historical data and do not constitute official forecasts, guarantees of match outcomes or betting advice in any way, shape or form.
