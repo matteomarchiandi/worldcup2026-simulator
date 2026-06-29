@@ -34,7 +34,7 @@ The project includes an interactive web application built with Streamlit:
 ## 📊 Data Source
 International Matches: Historical match results since 1872.
 
-## ✨ Update
+## ✨ Knockout stage update
 Added the simulation of the knockout stage based on the actual Round of 32 matches.
 
 # 📌 Further Improvements 
