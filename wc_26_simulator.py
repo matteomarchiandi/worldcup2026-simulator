@@ -26,12 +26,6 @@ msno.matrix(results, color=(0.1, 0.1, 0.1))
 plt.figure(figsize=(10, 3))
 plt.show()
 
-print(results.shape)
-row = 49355
-results.iloc[row:row+1]
-
-# results[(results['date'] > '2003-01-01') & (results['date'] < '2026-06-11') & (results['home_team'].isin(wc_teams) & results['away_team'].isin(wc_teams)) ]
-results[(results['date'] > '2023-01-01') & (results['date'] < '2026-06-11')]
 
 # Mapping inconsistent team names to match the world_cup_2026_groups definition
 team_name_map = {
@@ -1265,3 +1259,89 @@ current_elos = dict(sorted(current_elos.items()))
 print(f"Number of teams: {len(current_elos)}")
 
 simulate_world_cup_26(10000, current_elos)
+
+######################################################################################
+"""Prediction after Group Stage
+Now I update my prediction based on the actual Round-of-32 match-ups. 
+I also update the Elo scores according to the actual Group Stage.
+"""
+
+# Download latest version of the dataset
+path = kagglehub.dataset_download("martj42/international-football-results-from-1872-to-2017")
+
+group_stage_results = pd.read_csv(os.path.join(path, 'results.csv'))
+
+group_stage_results = group_stage_results[(group_stage_results['date'] >= '2026-06-11') & (group_stage_results['date'] <= '2026-06-27')]
+
+for idx, row in group_stage_results.iterrows():
+    elo_score.process_match(
+        home_team=row['home_team'],
+        away_team=row['away_team'],
+        home_score=row['home_score'],
+        away_score=row['away_score'],
+        tournament=row['tournament'],
+        is_neutral=row['neutral']
+    )
+
+# Update current_elos and filter for the 48 participating teams
+current_elos = {team: elo for team, elo in elo_score.scores.items() if team in wc_teams}
+current_elos = dict(sorted(current_elos.items()))
+
+print("Top 10 Elo ratings:")
+print(pd.Series(current_elos).sort_values(ascending=False).head(10))
+
+
+def simulate_KO_world_cup_26(round_of_32_matches, n_simulations=10000, elos=current_elos):
+    """
+    Runs the 2026 World Cup Knockout stage N times based on the actual RO32.
+    """
+    champions_tracker = defaultdict(int)
+
+    print(f"Simulating the 2026 World Cup Knockout Stage {n_simulations} times...")
+
+    for i in range(n_simulations):
+
+        # Step 4: Run the Knockout Engine (Matches 73 through 104)
+        champion = simulate_knockouts(round_of_32_matches, current_elos)
+
+        # Step 5: Log the champion
+        champions_tracker[champion] += 1
+
+        # Print progress to the console
+        if (i + 1) % 500 == 0:
+            print(f"Completed {i + 1} simulations out of {n_simulations}...")
+
+
+    print("\n======================================================")
+    print(" 2026 WORLD CUP CHAMPION PROBABILITIES (ACTUAL RO32)")
+    print("======================================================")
+
+    results = {team: (wins / n_simulations) * 100 for team, wins in champions_tracker.items()}
+    sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)
+
+    for rank, (team, win_prob) in enumerate(sorted_results, 1):
+        if win_prob > 0:
+            print(f"{rank}. {team}: {win_prob:.2f}%")
+
+
+
+round_of_32_matches = [
+    ('South Africa',  'Canada'),                 # M73
+    ('Germany',       'Paraguay'),               # M74
+    ('Netherlands',   'Morocco'),                # M75
+    ('Brazil',        'Japan'),                  # M76
+    ('France',        'Sweden'),                 # M77
+    ('Ivory Coast',   'Norway'),                 # M78
+    ('Mexico',        'Ecuador'),                # M79
+    ('England',       'DR Congo'),               # M80
+    ('United States', 'Bosnia and Herzegovina'), # M81
+    ('Belgium',       'Senegal'),                # M82
+    ('Portugal',      'Croatia'),                # M83
+    ('Spain',         'Austria'),                # M84
+    ('Switzerland',   'Algeria'),                # M85
+    ('Argentina',     'Cape Verde'),             # M86
+    ('Colombia',      'Ghana'),                  # M87
+    ('Australia',     'Egypt')                   # M88
+]
+
+simulate_KO_world_cup_26(round_of_32_matches, 10000, current_elos)
