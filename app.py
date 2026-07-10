@@ -153,7 +153,7 @@ with tab1:
     # --- Match Settings ---
     st.markdown("### Simulation Settings")
     is_knockout = st.checkbox("Knockout Match (no draws allowed)", value=False)
-    n_sims = st.slider("Number of Match Simulations", min_value=500, max_value=10000, value=5000, step=1000)
+    n_sims = st.slider("Number of Match Simulations", min_value=1000, max_value=10000, value=5000, step=1000)
 
     # --- Simulation Logic ---
     if st.button("Simulate Match", type="primary"):
