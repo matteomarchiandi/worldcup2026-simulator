@@ -237,20 +237,12 @@ with tab1:
 # ==========================================
 with tab2:
     st.subheader("🏆 Full Tournament Prediction Results")
-    st.markdown("These graphics show the winning probability of a team calculated across **10,000 Monte Carlo simulations** of the knockout stage according to actual Round of 32 matches using the model trained.")
+    st.markdown("These graphics show the winning probability of a team calculated across **50,000 Monte Carlo simulations** of the actual knockout stage from the semifinals using the model trained.")
     
     # Hard-coded results based on your XGBoost model's output
     # Numbers represent total tournament wins out of 10,000 simulations
     static_probabilities = {
-        "Argentina": 25.00, "France": 17.62, "Spain": 15.35, "England": 7.44,
-        "Brazil": 7.20, "Colombia": 5.47, "Netherlands": 4.23, "Portugal": 3.87,
-        "Morocco": 2.11, "Belgium": 1.58, "Germany": 1.46, "Switzerland": 1.26,
-        "Mexico": 1.04, "Japan": 0.95, "Norway": 0.94, "Ecuador": 0.84,
-        "United States": 0.62, "Croatia": 0.56, "Canada": 0.36, "Senegal": 0.35,
-        "Australia": 0.31, "Egypt": 0.25, "Austria": 0.23, "Algeria": 0.23,
-        "Paraguay": 0.22, "Ghana": 0.14, "Ivory Coast": 0.11, "Sweden": 0.09,
-        "Bosnia and Herzegovina": 0.07, "South Africa": 0.05, "DR Congo": 0.03,
-        "Cape Verde": 0.02
+        "Argentina": 35.37, "France": 27.56, "Spain": 27.17, "England": 10.08
     }
         
     # Convert the direct probabilities directly to a DataFrame
