@@ -260,7 +260,7 @@ with tab2:
         st.dataframe(
             df_static.style.format({"Win Probability (%)": "{:.2f}%"}), 
             use_container_width=True,
-            height=150
+            height=200
         )
         
     with col_right:
