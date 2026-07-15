@@ -10,7 +10,7 @@ from xgboost import XGBClassifier
 st.set_page_config(page_title="World Cup 2026 Match Predictor", page_icon="⚽", layout="centered")
 
 st.title("🌍 2026 World Cup Match Simulator")
-st.markdown("Select two teams to simulate a single match based on their ELO ratings and the trained XGBoost model (data last updated on 2026-06-27).")
+st.markdown("Select two teams to simulate a single match based on their ELO ratings and the trained XGBoost model (data last updated on 2026-07-11).")
 
 # --- Load Pre-computed Data & Model ---
 @st.cache_resource
